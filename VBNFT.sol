@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MITT
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract VoterBlock is ERC721, ERC721Enumerable{
+contract VBNFT is ERC721, ERC721Enumerable{
     using Counters for Counters.Counter;
     uint256 public MAX_SUPPLY;
     Counters.Counter private _tokenIdCounter;
@@ -14,7 +14,7 @@ contract VoterBlock is ERC721, ERC721Enumerable{
     }
 
     function _baseURI() internal pure override returns (string memory) {
-        return "https://i.pinimg.com/originals/2d/a0/3f/2da03f73141ff61403cccdd3593223ec.jpg";
+        return "https://images-platform.99static.com/ZGWMPGt5Yll4-wKR0grdDrFuLv8=/500x500/top/smart/99designs-contests-attachments/49/49133/attachment_49133556";
     }
 
     function safeMint() public {

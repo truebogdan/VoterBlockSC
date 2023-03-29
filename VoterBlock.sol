@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.7.0 <0.9.0;
-
+import "./VBStaking.sol";
 contract VoterBlock {
     struct Option {
         string name;
         uint256 votes;
     }
 
+    constructor(VBStaking stakingContract){
+        _staking = stakingContract;
+    }
+
+    VBStaking private _staking;
     struct Poll {
         string name;
         uint256 index;
@@ -18,16 +23,20 @@ contract VoterBlock {
     }
     Poll[] private  polls;
     Option[] private options;
+    uint256 public pollCreationCost = 0.01 ether;
+    mapping(address=> uint256) public rewardsMap;
+
 
     event PollCreated(uint256 pollIndex);
     event OptionVoted(uint256 votesCount);
 
-    function createPoll(
+    function createPoll (
         string memory name,
         string[] memory optionNames,
         uint256 deadline,
         address[] memory voters
-    ) public  {
+    ) public payable {
+        require(msg.value == pollCreationCost);
         uint256 pollIndex = polls.length;
         polls.push();
         Poll storage poll = polls[pollIndex];
@@ -50,7 +59,7 @@ contract VoterBlock {
             poll.votersMap[voters[i]] = 1;
             poll.votersList[0] = voters[i];
         }
-
+        splitRewardToStakers(msg.value);
         emit PollCreated(poll.index);
 
     }
@@ -59,6 +68,8 @@ contract VoterBlock {
         Poll storage poll = polls[index];
         canSenderVote = poll.votersMap[sender] == 1;
     }
+
+
 
     function getPoll(uint256 index)
         public
@@ -107,5 +118,37 @@ contract VoterBlock {
         return
             keccak256(abi.encodePacked(_s1)) ==
             keccak256(abi.encodePacked(_s2));
+    }
+
+    function splitRewardToStakers(uint256 reward) private {
+
+
+       (address[] memory stakers, uint256[] memory power) =  _staking.getVotingPower();
+
+       uint256 powerSum = 0;
+
+       for(uint256 i=0;i<stakers.length;i++){
+           powerSum = powerSum + power[i];
+       }
+
+       uint256 rewardPart = reward/powerSum;
+       for(uint256 i=0;i<stakers.length;i++){
+           rewardsMap[stakers[i]] += rewardPart*power[i]; 
+       }
+    }
+
+    function claimReward() public {
+        uint256 reward = rewardsMap[msg.sender];
+        require(reward>0);
+        payable(msg.sender).transfer(reward);
+        rewardsMap[msg.sender] = 0;
+    }
+
+    function getVotingPower() public view returns(address[] memory, uint256[] memory) {
+        return _staking.getVotingPower();
+    }
+
+    function setCreationCost(uint256 newCost) public {
+        pollCreationCost = newCost;
     }
 }
